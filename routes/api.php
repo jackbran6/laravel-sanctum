@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
@@ -15,42 +16,54 @@ use App\Http\Controllers\ProductController;
 |
 */
 
+// If you just have basic crud api without the need for authentication you can use the following which will
+// create all the routes for you.
+
+// Route::resource('products', ProductController::class);
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Basic example of a route function - logic will normally be handled by a controller
+// Protected routes
 
-// Route::get('/products', function () {
-//     return Product::all();
-// });
+Route::group(['middleware' => ['auth:sanctum']], function () {
 
-// This is an example of hardcoding data - to not do this you need a controller
+    // Add a product to the database
 
-// Route::post('/products', function () {
-//     return Product::create([
-//         'name' => 'Product One',
-//         'slug' => 'product-one',
-//         'description' => 'This is product one',
-//         'price' => '99.99'
+    Route::post('/products', [ProductController::class, 'store']);
 
-//     ]);
-// });
+    // Update a product
 
-// Get all using the index controller on ProductController
+    Route::put('/products/{id}', [ProductController::class, 'update']);
 
-// If you just have basic crud api without the need for authentication you can use the following which will
-// create all the routes for you.
+    // Delete a product
 
-Route::resource('products', ProductController::class);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-// Route::get('/products', [ProductController::class, 'index']);
+    // Log a user out
 
-// Add a product to the database
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
 
-// Route::post('/products', [ProductController::class, 'store']);
+// Public routes
 
-// Get a single product
+// Get all products
 
-// Search for a product
+Route::get('/products', [ProductController::class, 'index']);
+
+// Search all products
+
 Route::get('/products/search/{name}', [ProductController::class, 'search']);
+
+// Return a single product by id
+
+Route::get('/products{id}', [ProductController::class, 'show']);
+
+// Register a user
+
+Route::post('/register', [AuthController::class, 'register']);
+
+// Login a user
+
+Route::post('/login', [AuthController::class, 'login']);
