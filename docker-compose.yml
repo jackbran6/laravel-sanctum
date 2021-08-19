@@ -1,88 +1,87 @@
 version: "3"
 services:
+    #PHP Service
+    lst-php:
+        build:
+            context: .
+            dockerfile: .docker/php/Dockerfile
+        image: fff.agency/php-laravel
+        container_name: lst-php
+        restart: unless-stopped
+        tty: true
+        environment:
+            SERVICE_NAME: lst-php
+            SERVICE_TAGS: dev
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - .docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - lst-network
 
-  #PHP Service
-  {project-slug}-php:
-    build:
-      context: .
-      dockerfile: .docker/php/Dockerfile
-    image: fff.agency/php-laravel
-    container_name: {project-slug}-php
-    restart: unless-stopped
-    tty: true
-    environment:
-      SERVICE_NAME: {project-slug}-php
-      SERVICE_TAGS: dev
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      - .docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - {project-slug}-network
+    #Nginx Service
+    lst-web:
+        image: nginx:alpine
+        container_name: lst-web
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "8070:80"
+            - "443:443"
+        volumes:
+            - ./:/var/www
+            - .docker/nginx/conf.d/:/etc/nginx/conf.d/
+        networks:
+            - lst-network
 
-  #Nginx Service
-  {project-slug}-web:
-    image: nginx:alpine
-    container_name: {project-slug}-web
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./:/var/www
-      - .docker/nginx/conf.d/:/etc/nginx/conf.d/
-    networks:
-      - {project-slug}-network
+    #MySQL Service
+    lst-mysql:
+        image: mariadb:10.5.8
+        container_name: lst-mysql
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: laravel
+            MYSQL_ROOT_PASSWORD: f0rmfunfunc1on!
+            SERVICE_TAGS: dev
+            SERVICE_NAME: lst-mysql
+        volumes:
+            - mysqldata:/var/lib/mysql
+            - ./.docker/mysql/my.cnf:/etc/mysql/my.cnf
+        networks:
+            - lst-network
 
-  #MySQL Service
-  {project-slug}-mysql:
-    image: mariadb:10.5.8
-    container_name: {project-slug}-mysql
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: f0rmfunfunc1on!
-      SERVICE_TAGS: dev
-      SERVICE_NAME: {project-slug}-mysql
-    volumes:
-      - mysqldata:/var/lib/mysql
-      - ./.docker/mysql/my.cnf:/etc/mysql/my.cnf
-    networks:
-      - {project-slug}-network
+    lst-redis:
+        image: "redis:alpine"
+        container_name: lst-redis
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        volumes:
+            - "redisdata:/data"
+        networks:
+            - lst-network
 
-  {project-slug}-redis:
-    image: 'redis:alpine'
-    container_name: {project-slug}-redis
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
-    volumes:
-      - 'redisdata:/data'
-    networks:
-      - {project-slug}-network
-
-  {project-slug}-mailhog:
-    image: 'mailhog/mailhog:latest'
-    container_name: {project-slug}-mailhog
-    restart: unless-stopped
-    ports:
-      - 1025:1025
-      - 8025:8025
-    networks:
-      - {project-slug}-network
+    lst-mailhog:
+        image: "mailhog/mailhog:latest"
+        container_name: lst-mailhog
+        restart: unless-stopped
+        ports:
+            - 1025:1025
+            - 8025:8025
+        networks:
+            - lst-network
 
 #Docker Networks
 networks:
-  {project-slug}-network:
-    driver: bridge
+    lst-network:
+        driver: bridge
 
 #Volumes
 volumes:
-  mysqldata:
-    driver: local
-  redisdata:
-    driver: local
+    mysqldata:
+        driver: local
+    redisdata:
+        driver: local
